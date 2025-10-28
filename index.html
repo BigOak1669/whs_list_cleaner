@@ -17,8 +17,7 @@
       display: flex;
       gap: 20px;
     }
-    .input-panel,
-    .output-panel {
+    .input-panel, .output-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -52,8 +51,7 @@
       align-items: center;
       gap: 4px;
     }
-    .controls select,
-    .controls button {
+    .controls select, .controls button {
       padding: 4px 8px;
     }
     #count {
@@ -103,13 +101,14 @@
 
     function cleanList() {
       const text = inputEl.value || '';
-      const matches = text.match(/\\d+/g) || [];
+      // Extract all sequences of digits. Non-digit characters separate tokens.
+      const matches = text.match(/\d+/g) || [];
       const removeDupes = dedupeEl.checked;
       const seen = new Set();
       const numbers = [];
       const duplicates = [];
 
-      matches.forEach((token) => {
+      matches.forEach(token => {
         const num = parseInt(token, 10);
         if (Number.isNaN(num)) return;
         if (removeDupes) {
@@ -124,9 +123,11 @@
         }
       });
 
+      // Sort numerically
       numbers.sort((a, b) => a - b);
 
-      const formatted = numbers.map((n) => {
+      // Pad numbers < 100 to three digits
+      const formatted = numbers.map(n => {
         if (n < 100) {
           return n.toString().padStart(3, '0');
         }
@@ -138,24 +139,25 @@
       outputEl.textContent = outputStr;
       countEl.textContent = 'Count: ' + formatted.length;
 
+      // Build audit details
       let audit = '';
       if (removeDupes && duplicates.length > 0) {
         const uniqDupes = Array.from(new Set(duplicates));
-        const dupFormatted = uniqDupes.map((n) =>
-          n < 100 ? n.toString().padStart(3, '0') : n.toString()
-        );
-        audit += 'Removed duplicates: ' + dupFormatted.join(', ') + '\\n';
+        const dupFormatted = uniqDupes.map(n => (n < 100 ? n.toString().padStart(3, '0') : n.toString()));
+        audit += 'Removed duplicates: ' + dupFormatted.join(', ') + '\n';
       }
-      const junkMatches = text.match(/[^0-9\\s,;]+/g) || [];
-      const junkList = junkMatches.filter((tok) => /[A-Za-z]/.test(tok));
+      // Identify ignored tokens: any non-digit sequence that includes at least one letter
+      const junkMatches = text.match(/[^0-9\s,;]+/g) || [];
+      const junkList = junkMatches.filter(tok => /[A-Za-z]/.test(tok));
       if (junkList.length > 0) {
-        audit += 'Ignored tokens: ' + junkList.join(', ') + '\\n';
+        audit += 'Ignored tokens: ' + junkList.join(', ') + '\n';
       }
       auditEl.textContent = audit.trim();
     }
 
     cleanBtn.addEventListener('click', cleanList);
-    inputEl.addEventListener('keydown', (e) => {
+    // Allow Ctrl+Enter or Cmd+Enter to trigger cleaning
+    inputEl.addEventListener('keydown', e => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         cleanList();
