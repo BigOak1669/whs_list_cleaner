@@ -249,24 +249,37 @@
       const text = inputEl.value || '';
       const removeDupes = dedupeEl.checked;
 
-      // Extract all digit sequences. Non-digit chars are separators.
-      const matches = text.match(/\d+/g) || [];
-      const seen = new Set();
+      const seenNumbers = new Set();
       const numbers = [];
-      const duplicates = [];
+      const duplicateList = [];
+      const duplicateSeen = new Set();
+      const junkList = [];
 
-      for (const token of matches) {
-        const num = parseInt(token, 10);
-        if (Number.isNaN(num)) continue;
-        if (removeDupes) {
-          if (seen.has(num)) {
-            duplicates.push(num);
+      // Walk the input once, capturing digit runs and potential junk tokens together.
+      const tokenPattern = /\d+|[^0-9\s,;]+/g;
+      for (const match of text.matchAll(tokenPattern)) {
+        const token = match[0];
+        const isNumber = token.charCodeAt(0) >= 48 && token.charCodeAt(0) <= 57;
+
+        if (isNumber) {
+          const num = Number(token);
+          if (Number.isNaN(num)) continue;
+
+          if (removeDupes) {
+            if (seenNumbers.has(num)) {
+              if (!duplicateSeen.has(num)) {
+                duplicateSeen.add(num);
+                duplicateList.push(num);
+              }
+            } else {
+              seenNumbers.add(num);
+              numbers.push(num);
+            }
           } else {
-            seen.add(num);
             numbers.push(num);
           }
-        } else {
-          numbers.push(num);
+        } else if (/[A-Za-z]/.test(token)) {
+          junkList.push(token);
         }
       }
 
@@ -284,18 +297,14 @@
       // Build audit info
       let anyAudit = false;
 
-      if (removeDupes && duplicates.length > 0) {
-        const uniqDupes = Array.from(new Set(duplicates))
-          .map(n => (n < 100 ? String(n).padStart(3, '0') : String(n)));
-        dupsEl.textContent = uniqDupes.join(', ');
+      if (removeDupes && duplicateList.length > 0) {
+        const displayDupes = duplicateList.map(n => (n < 100 ? String(n).padStart(3, '0') : String(n)));
+        dupsEl.textContent = displayDupes.join(', ');
         anyAudit = true;
       } else {
         dupsEl.textContent = '';
       }
 
-      // “Ignored tokens”: any non-digit sequence with at least one letter
-      const junkMatches = text.match(/[^0-9\s,;]+/g) || [];
-      const junkList = junkMatches.filter(tok => /[A-Za-z]/.test(tok));
       if (junkList.length) {
         junkEl.textContent = junkList.join(', ');
         anyAudit = true;
