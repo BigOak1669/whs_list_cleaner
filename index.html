@@ -1,99 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warehouse Cleaner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wade’s Warehouse List Cleaner</title>
   <style>
+    /* ===== Brand tokens (from your guide) ===== */
+    :root{
+      --cream:#FFF3E3;
+      --g1:#AFFFD7; --g2:#00C48D; --g3:#007B4E; --g4:#14332D;
+      --p1:#D8C7F4; --p2:#AD96E9; --p3:#7348C6;
+      --o1:#FECC97; --o2:#FFB653; --o3:#FF9527;
+      --y1:#F9E285; --y2:#FEDC00; --y3:#FFCF00;
+
+      --text-primary: var(--g4);
+      --text-secondary: var(--g3);
+      --link: var(--g3);
+      --bg-page: var(--cream);
+      --surface: #fff;
+
+      --font-primary: "Factor A","Arial",Helvetica,sans-serif;
+
+      --fs-100: 0.875rem; --fs-200: 1rem; --fs-300: 1.125rem;
+      --fs-400: 1.5rem;  --fs-500: 2rem;  --fs-600: 2.5rem;
+      --fs-700: clamp(2.5rem, 4vw + 1rem, 3.5rem);
+
+      --lh-body: 1.5; --lh-head: 1.15;
+      --tracking-head: -0.02em;
+      --radius: .75rem;
+      --shadow: 0 2px 8px rgba(20,51,45,.08);
+      --ring: 0 0 0 3px rgba(0,196,141,.25);
+    }
+
+    /* ===== Base ===== */
+    html { font-size: 100%; }
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      box-sizing: border-box;
+      margin: 0;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-primary);
+      font-size: var(--fs-200);
+      line-height: var(--lh-body);
     }
-    h1 {
-      margin-top: 0;
-    }
+    a { color: var(--link); }
     .container {
-      display: flex;
-      gap: 20px;
+      max-width: 1100px;
+      margin-inline: auto;
+      padding: 24px 16px 40px;
     }
-    .input-panel, .output-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+
+    /* ===== Header ===== */
+    .page-header {
+      margin-bottom: 16px;
     }
+    .page-title {
+      font-size: var(--fs-700);
+      line-height: var(--lh-head);
+      letter-spacing: var(--tracking-head);
+      margin: 0 0 8px 0;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .page-sub {
+      margin: 0 0 16px 0;
+      color: var(--text-secondary);
+      font-size: var(--fs-300);
+      max-width: 70ch;
+    }
+
+    /* ===== Controls bar ===== */
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(20,51,45,.08);
+      margin-bottom: 16px;
+    }
+    .controls .group { display: flex; gap: 10px; align-items: center; }
+    .controls label { font-size: var(--fs-100); color: var(--text-primary); }
+    select, button {
+      font: inherit;
+      border-radius: .5rem;
+      border: 1px solid rgba(20,51,45,.2);
+      background: #fff;
+      padding: 8px 10px;
+    }
+    select:focus, button:focus, input[type="checkbox"]:focus-visible { outline: none; box-shadow: var(--ring); }
+    .btn {
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      padding: .6rem .9rem;
+    }
+    .btn-primary { background: var(--g3); color: #fff; }
+    .btn-primary:hover { filter: brightness(0.92); }
+    .btn-secondary { background: #fff; color: var(--g4); border: 1px solid rgba(20,51,45,.25); }
+    .btn-secondary:hover { background: #fafafa; }
+
+    /* ===== Layout for panes ===== */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(20,51,45,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .section-title {
+      margin: 2px 0 8px 2px;
+      font-size: var(--fs-400);
+      font-weight: 700;
+      line-height: var(--lh-head);
+      letter-spacing: var(--tracking-head);
+      color: var(--text-primary);
+    }
+    .section-hint {
+      margin: 0 0 8px 2px;
+      color: var(--text-secondary);
+      font-size: var(--fs-100);
+    }
+
     textarea {
       width: 100%;
-      flex: 1;
+      height: 360px;
       resize: vertical;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      line-height: 1.35;
       padding: 10px;
+      border-radius: .6rem;
+      border: 1px solid rgba(20,51,45,.2);
+      background: #fff;
+      color: var(--text-primary);
     }
-    pre.output {
+    .output {
+      min-height: 180px;
       white-space: pre-wrap;
       word-break: break-word;
-      flex: 1;
-      margin: 0;
       padding: 10px;
-      border: 1px solid #ccc;
-      background-color: #fafafa;
-      overflow-y: auto;
+      border-radius: .6rem;
+      border: 1px solid rgba(20,51,45,.2);
+      background: #fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
     }
-    .controls {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
+
+    .meta {
+      margin-top: 8px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+      color: var(--text-secondary);
+      font-size: var(--fs-100);
     }
-    .controls label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+
+    .audit {
+      margin-top: 8px;
+      background: #fff;
+      border: 1px dashed rgba(20,51,45,.25);
+      border-radius: .6rem;
+      padding: 8px 10px;
+      font-size: var(--fs-100);
+      color: var(--text-primary);
     }
-    .controls select, .controls button {
-      padding: 4px 8px;
-    }
-    #count {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #audit {
-      margin-top: 10px;
-      white-space: pre-wrap;
-      font-size: 0.9em;
-      color: #444;
+    .audit strong { color: var(--text-secondary); }
+
+    /* little decorative ribbon line */
+    .ribbon {
+      height: 6px;
+      background: linear-gradient(90deg, var(--g2), var(--g3));
+      border-radius: 999px;
+      margin-bottom: 16px;
+      opacity: .85;
     }
   </style>
 </head>
 <body>
-  <h1>Warehouse Cleaner</h1>
-  <div class="container">
-    <div class="input-panel">
-      <textarea id="input" placeholder="Paste your warehouse list here..."></textarea>
-      <div class="controls">
+  <div class="container" id="app">
+    <div class="page-header">
+      <div class="ribbon" aria-hidden="true"></div>
+      <h1 class="page-title">Wade’s Warehouse List Cleaner</h1>
+      <p class="page-sub">
+        Paste any messy list of warehouse IDs. This tool extracts the numbers, pads IDs under 100 to three digits
+        (e.g., <code>6 → 006</code>), sorts numerically, and (optionally) removes duplicates. Copy the cleaned list in one click.
+      </p>
+    </div>
+
+    <!-- Controls ABOVE the panes -->
+    <div class="controls" role="group" aria-label="Controls">
+      <div class="group">
         <label><input type="checkbox" id="dedupe" checked> Remove duplicates</label>
-        <label for="separator">Separator:</label>
-        <select id="separator">
-          <option value=", ">Comma + space (, )</option>
-          <option value="; ">Semicolon + space (; )</option>
+      </div>
+      <div class="group">
+        <label for="separator">Separator</label>
+        <select id="separator" aria-label="Output separator">
+          <option value=", ">Comma + space</option>
+          <option value="; ">Semicolon + space</option>
           <option value="\n">Newline</option>
         </select>
-        <button id="clean" type="button">Clean</button>
-        <button id="copy" type="button">Copy</button>
+      </div>
+      <div class="group" style="margin-left:auto;">
+        <button class="btn btn-primary" id="clean" type="button">Clean (Ctrl/⌘+Enter)</button>
+        <button class="btn btn-secondary" id="copy" type="button">Copy</button>
       </div>
     </div>
-    <div class="output-panel">
-      <pre id="output" class="output"></pre>
-      <div id="count"></div>
-      <div id="audit"></div>
+
+    <div class="grid">
+      <!-- Input -->
+      <section class="card">
+        <h2 class="section-title">Input</h2>
+        <p class="section-hint">Accepts newlines, commas, spaces, tabs, and labels like “WHS 1295”, “#452”, “(1013)”.</p>
+        <textarea id="input" placeholder="Paste your warehouse list here…"></textarea>
+      </section>
+
+      <!-- Results -->
+      <section class="card">
+        <h2 class="section-title">Results</h2>
+        <p class="section-hint">Cleaned, padded, sorted, and ready to copy.</p>
+        <div id="output" class="output" aria-live="polite"></div>
+        <div class="meta">
+          <div id="count">Count: 0</div>
+        </div>
+        <div class="audit" id="audit" hidden>
+          <div><strong>Removed duplicates:</strong> <span id="dups"></span></div>
+          <div><strong>Ignored tokens:</strong> <span id="junk"></span></div>
+        </div>
+      </section>
     </div>
   </div>
+
   <script>
+    // Elements
     const inputEl = document.getElementById('input');
     const outputEl = document.getElementById('output');
     const countEl = document.getElementById('count');
-    const auditEl = document.getElementById('audit');
+    const auditBox = document.getElementById('audit');
+    const dupsEl = document.getElementById('dups');
+    const junkEl = document.getElementById('junk');
+
     const dedupeEl = document.getElementById('dedupe');
     const separatorEl = document.getElementById('separator');
     const cleanBtn = document.getElementById('clean');
@@ -101,16 +247,17 @@
 
     function cleanList() {
       const text = inputEl.value || '';
-      // Extract all sequences of digits. Non-digit characters separate tokens.
-      const matches = text.match(/\d+/g) || [];
       const removeDupes = dedupeEl.checked;
+
+      // Extract all digit sequences. Non-digit chars are separators.
+      const matches = text.match(/\d+/g) || [];
       const seen = new Set();
       const numbers = [];
       const duplicates = [];
 
-      matches.forEach(token => {
+      for (const token of matches) {
         const num = parseInt(token, 10);
-        if (Number.isNaN(num)) return;
+        if (Number.isNaN(num)) continue;
         if (removeDupes) {
           if (seen.has(num)) {
             duplicates.push(num);
@@ -121,59 +268,73 @@
         } else {
           numbers.push(num);
         }
-      });
+      }
 
       // Sort numerically
       numbers.sort((a, b) => a - b);
 
-      // Pad numbers < 100 to three digits
-      const formatted = numbers.map(n => {
-        if (n < 100) {
-          return n.toString().padStart(3, '0');
-        }
-        return n.toString();
-      });
+      // Pad <100 to three digits
+      const formatted = numbers.map(n => (n < 100 ? String(n).padStart(3, '0') : String(n)));
 
+      // Output
       const sep = separatorEl.value;
-      const outputStr = formatted.join(sep);
-      outputEl.textContent = outputStr;
+      outputEl.textContent = formatted.join(sep);
       countEl.textContent = 'Count: ' + formatted.length;
 
-      // Build audit details
-      let audit = '';
+      // Build audit info
+      let anyAudit = false;
+
       if (removeDupes && duplicates.length > 0) {
-        const uniqDupes = Array.from(new Set(duplicates));
-        const dupFormatted = uniqDupes.map(n => (n < 100 ? n.toString().padStart(3, '0') : n.toString()));
-        audit += 'Removed duplicates: ' + dupFormatted.join(', ') + '\n';
+        const uniqDupes = Array.from(new Set(duplicates))
+          .map(n => (n < 100 ? String(n).padStart(3, '0') : String(n)));
+        dupsEl.textContent = uniqDupes.join(', ');
+        anyAudit = true;
+      } else {
+        dupsEl.textContent = '';
       }
-      // Identify ignored tokens: any non-digit sequence that includes at least one letter
+
+      // “Ignored tokens”: any non-digit sequence with at least one letter
       const junkMatches = text.match(/[^0-9\s,;]+/g) || [];
       const junkList = junkMatches.filter(tok => /[A-Za-z]/.test(tok));
-      if (junkList.length > 0) {
-        audit += 'Ignored tokens: ' + junkList.join(', ') + '\n';
+      if (junkList.length) {
+        junkEl.textContent = junkList.join(', ');
+        anyAudit = true;
+      } else {
+        junkEl.textContent = '';
       }
-      auditEl.textContent = audit.trim();
+
+      auditBox.hidden = !anyAudit;
     }
 
     cleanBtn.addEventListener('click', cleanList);
-    // Allow Ctrl+Enter or Cmd+Enter to trigger cleaning
-    inputEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+
+    // Keyboard shortcut: Ctrl/Cmd + Enter
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         cleanList();
       }
     });
-    copyBtn.addEventListener('click', () => {
-      const temp = document.createElement('textarea');
-      temp.value = outputEl.textContent;
-      document.body.appendChild(temp);
-      temp.select();
+
+    // Copy
+    copyBtn.addEventListener('click', async () => {
+      const text = outputEl.textContent || '';
       try {
-        document.execCommand('copy');
-      } catch (err) {
-        console.error('Copy failed', err);
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta);
+          ta.select(); document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = 'Copy'), 900);
+      } catch {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyBtn.textContent = 'Copy'), 1200);
       }
-      document.body.removeChild(temp);
     });
   </script>
 </body>
