@@ -1,355 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Warehouse List Cleaner</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse Cleaner</title>
   <style>
-    :root {
-      --bg: #0b0d10;
-      --fg: #e8edf2;
-      --muted: #a9b4c0;
-      --panel: #131720;
-      --accent: #6aa6ff;
-      --accent-2: #73e0a9;
-      --danger: #ff6b6b;
-      --warn: #ffcc66;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 16px;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+    .input-panel,
+    .output-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      width: 100%;
+      flex: 1;
+      resize: vertical;
+      font-family: monospace;
+      padding: 10px;
+    }
+    pre.output {
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 20% -10%, #111728 0%, var(--bg) 60%);
-      color: var(--fg);
-      line-height: 1.45;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: #fafafa;
+      overflow-y: auto;
     }
-
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom: 18px; }
-    header h1 { font-size: 22px; margin: 0; letter-spacing: .2px; font-weight: 700; }
-    header .sub { color: var(--muted); font-size: 13px; }
-
-    .bar { display:flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: linear-gradient(180deg, #192031, #141a26);
-      border: 1px solid #222b3d; padding: 12px; border-radius: var(--radius); box-shadow: var(--shadow); }
-
-    .bar .group { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .bar label { font-size: 13px; color: var(--muted); }
-    .bar select, .bar input[type="file"] { background: #0f1420; color: var(--fg); border: 1px solid #253049; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
-    .bar input[type="checkbox"] { transform: translateY(1px); }
-
-    .btn-row { display:flex; gap:10px; flex-wrap: wrap; margin-left:auto; }
-    .btn {
-      appearance: none; border: 0; color: #0b0d10; background: var(--accent); padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor:pointer; box-shadow: var(--shadow);
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
-    .btn.secondary { background: #233250; color: var(--fg); border: 1px solid #2d3a58; }
-    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid #2b3347; }
-    .btn:disabled { opacity:.5; cursor:not-allowed; }
-
-    .panes { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    @media (max-width: 1000px) { .panes { grid-template-columns: 1fr; } }
-
-    .card { background: linear-gradient(180deg, #161c28, #131826); border: 1px solid #222b3d; border-radius: var(--radius); box-shadow: var(--shadow); }
-
-    .pad { padding: 14px; }
-    .title { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 8px 0 6px; }
-
-    textarea { width: 100%; height: 420px; resize: vertical; background: #0d1320; color: var(--fg); border: 1px solid #24314e; border-radius: 12px; padding: 12px 12px; font-size: 14px; line-height: 1.35; }
-
-    .output-box { background: #0d1320; border: 1px solid #24314e; border-radius: 12px; padding: 12px; min-height: 160px; white-space: pre-wrap; word-break: break-word; }
-
-    .row { display:flex; align-items:center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
-
-    .statline { display:flex; flex-wrap: wrap; gap: 10px 14px; font-size: 13px; color: var(--muted); margin-top: 10px; }
-
-    .pill { display:inline-flex; align-items:center; gap:8px; padding: 6px 10px; border-radius: 999px; border:1px solid #28324a; background:#0e1422; }
-    .pill .dot { width:8px; height:8px; border-radius:50%; background: var(--accent-2); }
-
-    details { border-top: 1px dashed #2a334a; margin-top: 12px; padding-top: 10px; }
-    details summary { cursor: pointer; color: var(--muted); }
-
-    .list { display:flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .tag { background:#0e1422; border:1px solid #28324a; border-radius: 999px; padding:4px 8px; font-size: 12px; color: var(--fg); }
-    .tag.bad { border-color: #4a2730; background:#211117; color: #ffb3b3; }
-    .tag.warn { border-color: #4a3a27; background:#1f1710; color: #ffd99a; }
-
-    .file-zone { display:flex; align-items:center; gap:10px; }
-    .file-note { font-size: 12px; color: var(--muted); }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .controls select,
+    .controls button {
+      padding: 4px 8px;
+    }
+    #count {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #audit {
+      margin-top: 10px;
+      white-space: pre-wrap;
+      font-size: 0.9em;
+      color: #444;
+    }
   </style>
 </head>
 <body>
-  <div class="container" id="app">
-    <header>
-      <div>
-        <h1>Warehouse List Cleaner</h1>
-        <div class="sub">Paste messy lists → clean, padded, sorted, and sorted — all in your browser.</div>
-      </div>
-    </header>
-
-    <!-- Controls Bar -->
-    <div class="bar" role="group" aria-label="Controls">
-      <div class="group">
-        <label for="sep">Separator</label>
-        <select id="sep" aria-label="Output separator">
-          <option value=", ">Comma + space</option>
-          <option value="; ">Semicolon + space</option>
-          <option value="\n">New line</option>
+  <h1>Warehouse Cleaner</h1>
+  <div class="container">
+    <div class="input-panel">
+      <textarea id="input" placeholder="Paste your warehouse list here..."></textarea>
+      <div class="controls">
+        <label><input type="checkbox" id="dedupe" checked> Remove duplicates</label>
+        <label for="separator">Separator:</label>
+        <select id="separator">
+          <option value=", ">Comma + space (, )</option>
+          <option value="; ">Semicolon + space (; )</option>
+          <option value="\n">Newline</option>
         </select>
-      </div>
-
-      <div class="group">
-        <label><input type="checkbox" id="dedupe" checked> Dedupe</label>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn" id="run">Clean (Ctrl/⌘+Enter)</button>
-        <button class="btn secondary" id="copy" disabled>Copy</button>
-        <button class="btn ghost" id="reset">Reset</button>
+        <button id="clean" type="button">Clean</button>
+        <button id="copy" type="button">Copy</button>
       </div>
     </div>
-
-    <div class="panes">
-      <!-- Input Pane -->
-      <div class="card pad">
-        <div class="title">Input</div>
-        <textarea id="input" placeholder="Paste any list here… (commas, new lines, tabs, NBSPs, bullets, with or without labels like 'WHS 1295', '#452', '(1013)' etc.)"></textarea>
-        <div class="statline" id="input-hints">
-          <span class="pill"><span class="dot"></span> Non-digits are treated as separators/decoration and ignored.</span>
-        </div>
-      </div>
-
-      <!-- Output Pane -->
-      <div class="card pad">
-        <div class="row">
-          <div class="title">Results</div>
-          <div></div>
-        </div>
-        <div class="output-box" id="output" aria-live="polite"></div>
-        <div class="statline" id="stats"></div>
-
-        <details>
-          <summary>Details & audit</summary>
-          <div class="list" id="dupes"></div>
-          <div class="list" id="junk"></div>
-          <div class="list" id="warnings"></div>
-        </details>
-      </div>
+    <div class="output-panel">
+      <pre id="output" class="output"></pre>
+      <div id="count"></div>
+      <div id="audit"></div>
     </div>
   </div>
-
   <script>
-    // ===== Utilities =====
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const countEl = document.getElementById('count');
+    const auditEl = document.getElementById('audit');
+    const dedupeEl = document.getElementById('dedupe');
+    const separatorEl = document.getElementById('separator');
+    const cleanBtn = document.getElementById('clean');
+    const copyBtn = document.getElementById('copy');
 
-    const NBSP = /\u00A0/g; // non-breaking space
-    function zeroPad3(n) {
-      return (n < 100 ? String(n).padStart(3, '0') : String(n));
+    function cleanList() {
+      const text = inputEl.value || '';
+      const matches = text.match(/\\d+/g) || [];
+      const removeDupes = dedupeEl.checked;
+      const seen = new Set();
+      const numbers = [];
+      const duplicates = [];
+
+      matches.forEach((token) => {
+        const num = parseInt(token, 10);
+        if (Number.isNaN(num)) return;
+        if (removeDupes) {
+          if (seen.has(num)) {
+            duplicates.push(num);
+          } else {
+            seen.add(num);
+            numbers.push(num);
+          }
+        } else {
+          numbers.push(num);
+        }
+      });
+
+      numbers.sort((a, b) => a - b);
+
+      const formatted = numbers.map((n) => {
+        if (n < 100) {
+          return n.toString().padStart(3, '0');
+        }
+        return n.toString();
+      });
+
+      const sep = separatorEl.value;
+      const outputStr = formatted.join(sep);
+      outputEl.textContent = outputStr;
+      countEl.textContent = 'Count: ' + formatted.length;
+
+      let audit = '';
+      if (removeDupes && duplicates.length > 0) {
+        const uniqDupes = Array.from(new Set(duplicates));
+        const dupFormatted = uniqDupes.map((n) =>
+          n < 100 ? n.toString().padStart(3, '0') : n.toString()
+        );
+        audit += 'Removed duplicates: ' + dupFormatted.join(', ') + '\\n';
+      }
+      const junkMatches = text.match(/[^0-9\\s,;]+/g) || [];
+      const junkList = junkMatches.filter((tok) => /[A-Za-z]/.test(tok));
+      if (junkList.length > 0) {
+        audit += 'Ignored tokens: ' + junkList.join(', ') + '\\n';
+      }
+      auditEl.textContent = audit.trim();
     }
 
-    function splitIntoChunks(raw) {
-      // Replace NBSP with normal space, normalize line breaks
-      let s = (raw || '').replace(NBSP, ' ').replace(/\r\n?/g, '\n');
-      // Split on common hard delimiters (hyphens are left; numbers are extracted separately)
-      // commas, semicolons, pipes, slashes, bullets, newlines, tabs
-      const parts = s.split(/[;,|\/•\n\t]+/);
-      return parts.map(p => p.trim()).filter(Boolean);
-    }
-
-    function extractFromChunk(chunk, warnings) {
-      let s = chunk;
-      const nums = [];
-      let matchedAny = false;
-
-      // Extract any remaining standalone numbers (always)
-      const numRe = /(\d+)/g; let m;
-      while ((m = numRe.exec(s)) !== null) {
-        matchedAny = true;
-        nums.push(parseInt(m[1], 10));
-      }
-
-      return { nums, isJunk: !matchedAny };
-    }
-
-    function uniqueSorted(arr) {
-      const set = new Set(arr);
-      return Array.from(set).sort((a,b) => a - b);
-    }
-
-    // Parse a master list file into a Set<number>
-
-    // ===== Main processing =====
-    function processInput() {
-      const raw = $('#input').value;      const dedupe = $('#dedupe').checked;
-      const sep = $('#sep').value;
-      const statsEl = $('#stats');
-      const outputEl = $('#output');
-      const dupesEl = $('#dupes');      const junkEl = $('#junk');
-      const warnEl = $('#warnings');
-
-      // Reset UI bits
-      outputEl.textContent = '';
-      statsEl.textContent = '';
-      dupesEl.innerHTML = '';
-      unknownsEl.innerHTML = '';
-      junkEl.innerHTML = '';
-      warnEl.innerHTML = '';
-      $('#copy').disabled = true;
-
-      if (!raw.trim()) return;
-
-      const chunks = splitIntoChunks(raw);
-      const counts = new Map(); // num -> count
-      const allNums = []; // flattened, including duplicates
-      const junkChunks = [];
-      const warnings = [];
-
-      for (const c of chunks) {
-        const { nums, isJunk } = extractFromChunk(c, warnings);
-        if (isJunk) {
-          // Show up to 100 junk items to avoid massive UI spam
-          if (junkChunks.length < 100) junkChunks.push(c);
-          continue;
-        }
-        for (const n of nums) {
-          allNums.push(n);
-          counts.set(n, (counts.get(n) || 0) + 1);
-        }
-      }
-
-      // Prepare arrays for output
-      const uniqueNums = dedupe ? uniqueSorted(allNums) : allNums.slice().sort((a,b) => a-b);
-      const formatted = uniqueNums.map(zeroPad3);
-
-      // Validation against master
-
-      // Duplicates report
-      const duplicates = Array.from(counts.entries())
-        .filter(([, cnt]) => cnt > 1)
-        .sort((a,b) => a[0]-b[0]);
-
-      // Render output
-      outputEl.textContent = formatted.join(sep);
-      $('#copy').disabled = formatted.length === 0;
-
-      const totalIn = allNums.length; // includes dups
-      const totalOut = uniqueNums.length; // after dedupe (if enabled)
-      const dedupRemoved = totalIn - totalOut;
-
-      const parts = [];
-      parts.push(`Count: ${totalOut}`);
-      parts.push(`Input tokens parsed: ${chunks.length}`);
-      parts.push(`Numbers found: ${totalIn}${dedupe ? ` (deduped −${dedupRemoved})` : ''}`);${window.__MASTER_SIZE ? ` / Master size: ${window.__MASTER_SIZE}` : ''}`);
-      }
-      statsEl.textContent = parts.join(' • ');
-
-      // Audit chips
-      if (duplicates.length) {
-        const label = document.createElement('div');
-        label.className = 'tag warn';
-        label.textContent = `Duplicates removed: ${dedupRemoved}`;
-        dupesEl.appendChild(label);
-        for (const [num, cnt] of duplicates.slice(0, 200)) {
-          const chip = document.createElement('div');
-          chip.className = 'tag warn';
-          chip.textContent = `${zeroPad3(num)} × ${cnt}`;
-          dupesEl.appendChild(chip);
-        }
-      }
-
-      if (unknowns.length) {
-        const label = document.createElement('div');
-        label.className = 'tag bad';
-        label.textContent = `Unknown (not in master): ${unknowns.length}`;
-        unknownsEl.appendChild(label);
-        for (const n of unknowns.slice(0, 500)) {
-          const chip = document.createElement('div');
-          chip.className = 'tag bad';
-          chip.textContent = zeroPad3(n);
-          unknownsEl.appendChild(chip);
-        }
-      }
-
-      if (junkChunks.length) {
-        const label = document.createElement('div');
-        label.className = 'tag';
-        label.textContent = `Removed junk tokens: ${junkChunks.length}`;
-        junkEl.appendChild(label);
-        for (const j of junkChunks.slice(0, 200)) {
-          const chip = document.createElement('div');
-          chip.className = 'tag';
-          chip.textContent = j;
-          junkEl.appendChild(chip);
-        }
-      }
-
-      if (warnings.length) {
-        for (const w of warnings) {
-          const chip = document.createElement('div');
-          chip.className = 'tag warn';
-          chip.textContent = w;
-          warnEl.appendChild(chip);
-        }
-      }
-    }
-
-    // ===== Master file handling =====
+    cleanBtn.addEventListener('click', cleanList);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        cleanList();
       }
     });
-      const { set, size } = parseMaster(text);
-      window.__MASTER_SET = set;
-      window.__MASTER_SIZE = set.size; // unique
-      $('#master-note').textContent = `Master loaded: ${set.size} unique (${size} raw)`;
-      processInput();
-    });
-
-    // ===== Buttons =====
-    $('#run').addEventListener('click', processInput);
-    $('#reset').addEventListener('click', () => {
-      $('#input').value = '';
-      $('#output').textContent = '';
-      $('#stats').textContent = '';
-      $('#dupes').innerHTML = '';
-      $('#unknowns').innerHTML = '';
-      $('#junk').innerHTML = '';
-      $('#warnings').innerHTML = '';
-      $('#copy').disabled = true;
-    });
-
-    $('#copy').addEventListener('click', async () => {
-      const text = $('#output').textContent || '';
+    copyBtn.addEventListener('click', () => {
+      const temp = document.createElement('textarea');
+      temp.value = outputEl.textContent;
+      document.body.appendChild(temp);
+      temp.select();
       try {
-        await navigator.clipboard.writeText(text);
-        const btn = $('#copy');
-        const old = btn.textContent; btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = old, 900);
-      } catch {
-        // Fallback
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        document.execCommand('copy'); document.body.removeChild(ta);
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Copy failed', err);
       }
-    });
-      const text = $('#output').textContent || '';
-      const blob = new Blob([text + '\n'], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'cleaned_warehouses.txt';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-
-    // Re-run when options change
-    $$('#sep, #dedupe').forEach(el => el.addEventListener('change', processInput));
-
-    // Keyboard shortcut: Ctrl/Cmd+Enter
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault(); processInput();
-      }
+      document.body.removeChild(temp);
     });
   </script>
 </body>
